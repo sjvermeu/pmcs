@@ -58,3 +58,17 @@ for each STREAM in STREAMS
     Substitute @@TARGETNAME@@ with FQDN
     Substitute @@FILENAME@@ with DSRESULT file name
 ```
+
+### Pseudo code - ad-hoc run ###
+
+```
+(Reuse configuration from earlier part)
+
+Bind webserver-functionality on PORT (argument)
+
+for each REQUEST
+  if REQUEST != GET /STREAM HTTP/1.0
+    ignore request
+  
+  (reuse STREAM handling code from previous part)
+```
