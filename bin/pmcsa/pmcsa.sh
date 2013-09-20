@@ -109,7 +109,13 @@ sendResults() {
 };
 
 daemonize() {
-  echo "Daemonization is not supported yet";
+  echo "Daemonizing pmcsa on port ${PORT}";
+  echo "";
+
+  while true;
+  do
+    echo "OK" | nc -l -v -p ${PORT} -q 1 >> ${TMPDIR}/connection.log;
+  done
 };
 
 evaluateStreams() {
