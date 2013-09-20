@@ -1,0 +1,4 @@
+  <lin-def:partition_object id="oval:org.gentoo.dev.swift:obj:2"
+    version="1" comment="The /home partition">
+    <lin-def:mount_point>/home</lin-def:mount_point>
+  </lin-def:partition_object>

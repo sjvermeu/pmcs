@@ -1,0 +1,16 @@
+  <definition id="oval:org.gentoo.dev.swift:def:3" version="1" class="compliance">
+    <metadata>
+      <title>The /home file system is mounted with the nosuid option</title>
+      <affected family="unix">
+        <platform>Gentoo Linux</platform>
+      </affected>
+      <description>
+        This definition tests whether the /home partition is mounted with the nosuid 
+        mount option.
+      </description>
+    </metadata>
+    <criteria operator="AND">
+      <criterion test_ref="oval:org.gentoo.dev.swift:tst:2" comment="The /home location is on a separate partition" />
+      <criterion test_ref="oval:org.gentoo.dev.swift:tst:3" comment="The /home partition is mounted with nosuid mount option" />
+    </criteria>
+  </definition>

@@ -1,0 +1,8 @@
+  <lin-def:partition_test id="oval:org.gentoo.dev.swift:tst:3"
+    version="1" check="all" check_existence="all_exist"
+    comment="Tests that /home is mounted with nosuid option">
+    <!-- /home partition -->
+    <lin-def:object object_ref="oval:org.gentoo.dev.swift:obj:2" />
+    <!-- "nosuid" mount option -->
+    <lin-def:state state_ref="oval:org.gentoo.dev.swift:ste:1" />
+  </lin-def:partition_test>

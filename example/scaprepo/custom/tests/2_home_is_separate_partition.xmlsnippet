@@ -1,0 +1,6 @@
+  <lin-def:partition_test id="oval:org.gentoo.dev.swift:tst:2" 
+    version="1" check="all" check_existence="all_exist" 
+    comment="Tests that /home is a separate file system">
+    <!-- /home partition -->
+    <lin-def:object object_ref="oval:org.gentoo.dev.swift:obj:2" />
+  </lin-def:partition_test>

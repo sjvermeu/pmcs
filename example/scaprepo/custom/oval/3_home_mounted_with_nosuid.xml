@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<oval_definitions xmlns="http://oval.mitre.org/XMLSchema/oval-definitions-5"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:oval="http://oval.mitre.org/XMLSchema/oval-common-5"
+        xmlns:oval-def="http://oval.mitre.org/XMLSchema/oval-definitions-5" 
+        xmlns:lin-def="http://oval.mitre.org/XMLSchema/oval-definitions-5#linux"
+        xmlns:unix-def="http://oval.mitre.org/XMLSchema/oval-definitions-5#unix"
+        xmlns:ind-def="http://oval.mitre.org/XMLSchema/oval-definitions-5#independent"
+        xsi:schemaLocation="
+                http://oval.mitre.org/XMLSchema/oval-definitions-5 oval-definitions-schema.xsd
+                http://oval.mitre.org/XMLSchema/oval-definitions-5#linux linux-definitions-schema.xsd
+                http://oval.mitre.org/XMLSchema/oval-definitions-5#unix unix-definitions-schema.xsd
+                http://oval.mitre.org/XMLSchema/oval-definitions-5#independent independent-definitions-schema.xsd
+                http://standards.iso.org/iso/19770/-2/2009/schema.xsd schema.xsd">
+
+  <generator>
+    <oval:product_name>pmcs-snippets2xml</oval:product_name>
+    <oval:product_version>1.0</oval:product_version>
+    <oval:schema_version>5.10</oval:schema_version>
+    <oval:timestamp>2013-09-20T13:23:02</oval:timestamp>
+  </generator>
+<definitions>
+  <definition id="oval:org.gentoo.dev.swift:def:3" version="1" class="compliance">
+    <metadata>
+      <title>The /home file system is mounted with the nosuid option</title>
+      <affected family="unix">
+        <platform>Gentoo Linux</platform>
+      </affected>
+      <description>
+        This definition tests whether the /home partition is mounted with the nosuid 
+        mount option.
+      </description>
+    </metadata>
+    <criteria operator="AND">
+      <criterion test_ref="oval:org.gentoo.dev.swift:tst:2" comment="The /home location is on a separate partition" />
+      <criterion test_ref="oval:org.gentoo.dev.swift:tst:3" comment="The /home partition is mounted with nosuid mount option" />
+    </criteria>
+  </definition>
+</definitions>
+<tests>
+  <lin-def:partition_test id="oval:org.gentoo.dev.swift:tst:2" 
+    version="1" check="all" check_existence="all_exist" 
+    comment="Tests that /home is a separate file system">
+    <!-- /home partition -->
+    <lin-def:object object_ref="oval:org.gentoo.dev.swift:obj:2" />
+  </lin-def:partition_test>
+  <lin-def:partition_test id="oval:org.gentoo.dev.swift:tst:3"
+    version="1" check="all" check_existence="all_exist"
+    comment="Tests that /home is mounted with nosuid option">
+    <!-- /home partition -->
+    <lin-def:object object_ref="oval:org.gentoo.dev.swift:obj:2" />
+    <!-- "nosuid" mount option -->
+    <lin-def:state state_ref="oval:org.gentoo.dev.swift:ste:1" />
+  </lin-def:partition_test>
+</tests>
+<objects>
+  <lin-def:partition_object id="oval:org.gentoo.dev.swift:obj:2"
+    version="1" comment="The /home partition">
+    <lin-def:mount_point>/home</lin-def:mount_point>
+  </lin-def:partition_object>
+</objects>
+<states>
+  <lin-def:partition_state id="oval:org.gentoo.dev.swift:ste:1"
+    version="1" comment="The file system is mounted with the nosuid mount option">
+    <lin-def:mount_options entity_check="at least one">nosuid</lin-def:mount_options>
+  </lin-def:partition_state>
+</states>
+</oval_definitions>

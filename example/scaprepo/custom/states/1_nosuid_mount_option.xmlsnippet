@@ -1,0 +1,4 @@
+  <lin-def:partition_state id="oval:org.gentoo.dev.swift:ste:1"
+    version="1" comment="The file system is mounted with the nosuid mount option">
+    <lin-def:mount_options entity_check="at least one">nosuid</lin-def:mount_options>
+  </lin-def:partition_state>
