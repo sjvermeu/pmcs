@@ -78,8 +78,13 @@ To handle the configuration as well as SCAP content in a manageable manner, the
 agent will always look through the repository using the following order:
 
 - Host-specific at `hosts/MYFQDN` using a fully qualified hostname
+- Domain-specific with class and platform information at
+  `domains/MYDOMAIN/classes/MYCLASS/platforms/MYPLATFORM` (only for SCAP data
+  streams)
 - Domain-specific with class information at `domains/MYDOMAIN/classes/MYCLASS` using the class
-- Class-specific at `classes/MYFQDN` using the class
+- Class-specific at `classes/MYCLASS/platforms/MYPLATFORM` (only for SCAP data
+  streams)
+- Class-specific at `classes/MYCLASS` using the class
 - Domain-specific without class information at `domains/MYDOMAIN`
 - Keyword-triggered (only for SCAP data streams) at `keywords/MYKEYWORD` using the
   keyword (only for SCAP data streams)
