@@ -36,6 +36,7 @@ Fetch configuration from POSSIBLE_TARGETS (overriding values):
   PLATFORM   = get platform from configuration
   KEYWORDS   = get keywords from configuration (comma separated)
   RESULTREPO = get resultrepo from configuration
+  SCAPSCAN   = get scapscanner from configuration
 
 STREAM_LISTS = 
   <repo-urn>/stream/hosts/FQDN/list.conf
@@ -50,7 +51,9 @@ STREAMS = Concatenate stream identifiers from all list.conf files
 
 for each STREAM in STREAMS
   DATASTREAMFILE = fetch <repo-urn>/stream/STREAM
-  DSRESULT       = evaluate DATASTREAMFILE using local SCAP scanner
+  DSRESULT       = evaluate DATASTREAMFILE using SCAPSCAN
+    Substitute @@STREAMNAME@@ with path to DATASTREAMFILE
+    Substitute @@RESULTNAME@@ with path to DSRESULT
   send DSRESULT to RESULTREPO
     Substitute @@TARGETNAME@@ with FQDN
     Substitute @@FILENAME@@ with DSRESULT file name
