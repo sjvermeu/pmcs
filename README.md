@@ -68,12 +68,12 @@ Checking order
 To handle the configuration as well as SCAP content in a manageable manner, the
 agent will always look through the repository using the following order:
 
-- Host-specific at `hosts/` using a fully qualified hostname
-- Domain-specific with class information at `domains/classes/` using the class
-- Class-specific at `classes/` using the class
-- Domain-specific without class information at `domains/`
-- Keyword-triggered (only for SCAP data streams) at `keywords/` using the
-  keyword
+- Host-specific at `hosts/MYFQDN` using a fully qualified hostname
+- Domain-specific with class information at `domains/MYDOMAIN/classes/MYCLASS` using the class
+- Class-specific at `classes/MYFQDN` using the class
+- Domain-specific without class information at `domains/MYDOMAIN`
+- Keyword-triggered (only for SCAP data streams) at `keywords/MYKEYWORD` using the
+  keyword (only for SCAP data streams)
 
 So to obtain system configuration information, the *first* hit will be used (a
 system can only have a single configuration entry).
@@ -97,7 +97,7 @@ support this, which means that the pmcsa (pmsc agent) will also support a
 daemonized setup to which administrators can push evaluation requests (using
 pmcsc - pmcs client):
 ```
-~$ pmcsc eval scap_org.gentoo.dev.swift_datastream_cve-2013-3312 class=unix
+~$ pmcsc eval check-cvs-2013-2332 class=unix
 ```
 
 The client in the above case will check what the target systems are with the
