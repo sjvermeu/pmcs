@@ -56,8 +56,7 @@ waiting for triggers to do ad-hoc evaluations.
 The scheduled evaluation does not need a daemonized agent; it can be perfectly
 scheduled from a scheduler such as Cron, Windows Task Scheduler or even more
 enterprise job schedulers. But we will support the daemonized approach as well
-in case the administrator wants to use a built-in scheduler rather than the
-system scheduler.
+where the admin can trigger evaluations.
 
 Only a single parameter should be passed on to the agent: the URN towards the
 central configuration repository. For instance (pmcsa = pmcs agent):
