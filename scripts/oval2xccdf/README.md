@@ -15,3 +15,16 @@ Usage
 ```
 
 All definitions in the list of OVAL files will be included.
+
+Building a SCAP data stream
+---------------------------
+
+The result of this script can be used to build a SCAP data stream using
+open-scap:
+
+```
+~$ oval2xccdf.sh *-oval.xml > xccdf.xml
+~$ oscap ds sds-compose xccdf.xml ds.xml
+```
+
+The resulting `ds.xml` file is the data stream.
