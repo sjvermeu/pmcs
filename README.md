@@ -75,22 +75,24 @@ Checking order
 --------------
 
 To handle the configuration as well as SCAP content in a manageable manner, the
-agent will always look through the repository using the following order:
+agent will always look through the repository using the following list:
 
-- Host-specific at `hosts/MYFQDN` using a fully qualified hostname
-- Domain-specific with class and platform information at
+* Host-specific at `hosts/MYFQDN` using a fully qualified hostname
+* Domain-specific with class and platform information at
   `domains/MYDOMAIN/classes/MYCLASS/platforms/MYPLATFORM` (only for SCAP data
   streams)
-- Domain-specific with class information at `domains/MYDOMAIN/classes/MYCLASS` using the class
-- Class-specific at `classes/MYCLASS/platforms/MYPLATFORM` (only for SCAP data
+* Domain-specific with class information at `domains/MYDOMAIN/classes/MYCLASS` using the class
+* Class-specific at `classes/MYCLASS/platforms/MYPLATFORM` (only for SCAP data
   streams)
-- Class-specific at `classes/MYCLASS` using the class
-- Domain-specific without class information at `domains/MYDOMAIN`
-- Keyword-triggered (only for SCAP data streams) at `keywords/MYKEYWORD` using the
+* Class-specific at `classes/MYCLASS` using the class
+* Domain-specific without class information at `domains/MYDOMAIN`
+* Keyword-triggered (only for SCAP data streams) at `keywords/MYKEYWORD` using the
   keyword (only for SCAP data streams)
 
-So to obtain system configuration information, the *first* hit will be used (a
-system can only have a single configuration entry).
+So to obtain system configuration information, the configuration will be pulled
+in the reverse order, overriding values as they come along. So the domain
+configuration might say `platform=Gentoo Linux` but if the host-specific one
+sais `platform=Windows Server 2012` then the latter "wins".
 
 To obtain SCAP data stream(s), *all* hits are used (a system can evaluate
 various SCAP data streams).
