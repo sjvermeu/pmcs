@@ -33,6 +33,16 @@ a set of system parameters (hostname, domainname, platform, class and generic
 keywords). They evaluate the SCAP data stream(s) and send back the reports
 towards a central repository.
 
+SCAP content repositories
+-------------------------
+
+The SCAP content needs to be managed outside, but pmcs can help a bit. It
+includes a scaprepo example to show how external repositories can be refreshed
+(for those definitions that are needed).
+
+If own development is needed, there is also a script that helps creating OVAL
+files based on separate snippets.
+
 Configurationless approach
 --------------------------
 
