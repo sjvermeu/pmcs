@@ -16,3 +16,42 @@ Design
 ``` 
 
 The `-id` option is to daemonize the agent.
+
+### Pseudo code - scheduled run ###
+
+The following pseudo code shows how pmcsa functions for the scheduled run.
+
+```
+FQDN   = get system fully qualified hostname
+DOMAIN = get system domain name
+CLASS  = get system class
+
+POSSIBLE_TARGETS = 
+  <repo-urn>/config/domains/DOMAIN.conf
+  <repo-urn>/config/classes/CLASS.conf
+  <repo-urn>/config/domains/DOMAIN/classes/CLASS.conf
+  <repo-urn>/config/hosts/FQDN.conf
+
+Fetch configuration from POSSIBLE_TARGETS (overriding values):
+  PLATFORM   = get platform from configuration
+  KEYWORDS   = get keywords from configuration (comma separated)
+  RESULTREPO = get resultrepo from configuration
+
+STREAM_LISTS = 
+  <repo-urn>/stream/hosts/FQDN/list.conf
+  <repo-urn>/stream/domains/DOMAIN/classes/CLASS/platforms/PLATFORM/list.conf
+  <repo-urn>/stream/domains/DOMAIN/classes/CLASS/list.conf
+  <repo-urn>/stream/classes/CLASS/platforms/PLATFORM/list.conf
+  <repo-urn>/stream/classes/CLASS/list.conf
+  <repo-urn>/stream/domains/DOMAIN/list.conf
+  [ for each KEYWORD in KEYWORDS: <repo-urn>/stream/keywords/KEYWORD/list.conf ]
+
+STREAMS = Concatenate stream identifiers from all list.conf files
+
+for each STREAM in STREAMS
+  DATASTREAMFILE = fetch <repo-urn>/stream/STREAM
+  DSRESULT       = evaluate DATASTREAMFILE using local SCAP scanner
+  send DSRESULT to RESULTREPO
+    Substitute @@TARGETNAME@@ with FQDN
+    Substitute @@FILENAME@@ with DSRESULT file name
+```
