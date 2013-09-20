@@ -108,6 +108,10 @@ sendResults() {
   fi
 };
 
+daemonize() {
+  echo "Daemonization is not supported yet";
+};
+
 evaluateStreams() {
   for STREAM in $(cat ${TMPDIR}/list);
   do
@@ -171,11 +175,18 @@ echo "REPO   = ${REPO}";
 echo "FQDN   = ${FQDN}";
 echo "DOMAIN = ${DOMAIN}";
 echo "CLASS  = ${CLASS}";
+echo "PORT   = ${PORT}";
 echo "";
 
 setConfigurationVariables;
-getStreamList;
-evaluateStreams;
+
+if [ -n "${PORT}" ];
+then
+  daemonize;
+else
+  getStreamList;
+  evaluateStreams;
+fi
 
 cd ${CDIR};
 rm -rf ${TMPDIR};
