@@ -104,6 +104,42 @@ The evaluated results are sent to a central repository. There, a per-host result
 directory is kept for each day (for the scheduled streams) or invocation (for
 the ad-hoc results).
 
+### Generating reports ###
+
+Reports are made off-line (so not on retrieval of the data). This is not only to
+keep the code simple and segregated, but also from a security point of view -
+directly triggering processing upon retrieval of a file opens more access
+vectors to exploit - and we don't want that do we.
+
+Hence the repository itself only stores the files on the file system, doing a
+simple check that the retrieved file and origin (FQDN) matches the remote IP
+address that is connected to the infrastructure. A set of systems can be added
+to the access control lists if central SCAP scanning is performed (for instance
+to scan remote database systems) and the results are submitted to the reporting
+repository.
+
+The reports themselves are either batch-triggered or event-triggered. This event
+can be whatever you want - in the pmcs code we will use log scanning, where the
+access log of the reporting server is used as the source of the events.
+
+### Default reports ###
+
+In pmcs three sets of default reports will be supported, but of course you are
+free to implement your own.
+
+- The first one will give an overview of all tests that have been ran (and their
+  state) for a system, given its FQDN (so there will be daily, per-system
+  reports). This is for OVAL results.
+- The second one will give an overview of all systems for which a test has been
+  run (and their state). This allows administrators or security admins to see
+  the state of the entire environment for a particular rule. This is for OVAL
+  results.
+- For each XCCDF tested (well, result received) a report will be generated that
+  contains the state of all tests for all servers for which the XCCDF has been
+  ran.
+
+Next to the default reports, an example will be provided where the results are
+parsed by open-scap to generate its default reports.
 Ad-hoc invocations
 ------------------
 
