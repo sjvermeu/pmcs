@@ -15,7 +15,7 @@ Design
 ~$ pmcsa [-d <port>] <repo-urn>
 ``` 
 
-The `-id` option is to daemonize the agent.
+The `-d` option is to daemonize the agent.
 
 ### Streams ###
 
@@ -66,17 +66,26 @@ for each STREAM in STREAMS
   STREAMTYPE     = STREAM[0] # separated
   STREAMPATH     = STREAM[1] # separated
   STREAMID       = STREAM[2] # separated
-  DATASTREAMFILE = fetch <repo-urn>/stream/STREAM
+  DATASTREAMFILE = fetch <repo-urn>/stream/STREAMPATH
 
   ## SCAPSCAN{STREAMTYPE} -> depends on type!
-  DSRESULT       = evaluate DATASTREAMFILE using SCAPSCAN{STREAMTYPE}
+  {DSRESULT, DSRESULT2}       = evaluate DATASTREAMFILE using SCAPSCAN{STREAMTYPE}
     Substitute @@STREAMNAME@@ with path to DATASTREAMFILE
     Substitute @@RESULTNAME@@ with path to DSRESULT
+    Substitute @@2NDRESULTNAME@@ with path to DSRESULT2
     Substitute @@STREAMID@@ with STREAMID
   send DSRESULT to RESULTREPO
     Substitute @@TARGETNAME@@ with FQDN
     Substitute @@FILENAME@@ with DSRESULT file name
+  if DSRESULT2 exists
+    send DSRESULT2 to RESULTREPO
+      Substitute @@TARGETNAME@@ with FQDN
+      Substitute @@FILENAME@@ with DSRESULT2 file name
 ```
+
+As the evaluation of a data stream could lead to multiple result files (one
+xccdf result file and one oval result file), we need to support retrieval of
+both. Hence the `DSRESULT` and `DSRESULT2` variables.
 
 ### Pseudo code - ad-hoc run ###
 
