@@ -112,9 +112,53 @@ daemonize() {
   echo "Daemonizing pmcsa on port ${PORT}";
   echo "";
 
-  while true;
+  RC=0;
+  OUT="";
+  URL="";
+  REMHOST="";
+
+  # HTTP header info
+  TYPE=""
+  URL=""
+  VERS=""
+
+  # pmcs variables to create stream info
+  STREAMTYPE=""
+  STREAMPATH=""
+  STREAMID=""
+
+  # expression matching
+  USERSTRING="[a-zA-Z0-9_-/\.]*"
+  URLSTRING="(type|path|id)"
+
+  while [ ${RC} -eq 0 ]; 
   do
-    echo "OK" | nc -l -v -p ${PORT} -q 1 >> ${TMPDIR}/connection.log;
+    OUT=$(echo "Om mnom mnom... " | nc -l -v -p ${PORT} 2>&1);
+    RC=$?;
+    URL=$(echo "${OUT}" | grep -E '^(HEAD|GET) ' | sed -e 's:^[^	 ]*[ 	]\([^ 	]*\).*:\1:g');
+    REMHOST=$(echo "${OUT}" | grep '^connect to' | sed -e 's:.* from \(.*\)[ 	][0-9]*:\1:g');
+
+    echo "Request from '${REMHOST}': ${URL}";
+    echo "${URL}" | grep -qE "/Evaluate\?${URLSTRING}=${USERSTRING}\&${URLSTRING}=${USERSTRING}\&${URLSTRING}=${USERSTRING}";
+    if [ $? -ne 0 ];
+    then
+      echo "  Request does not match required '/Evaluate' with parameters type, path and id";
+      continue;
+    fi
+
+    STREAMTYPE=$(echo ${URL} | grep 'type=' | sed -e "s:.*type=\(${USERSTRING}\).*:\1:g");
+    STREAMPATH=$(echo ${URL} | grep 'path=' | sed -e "s:.*path=\(${USERSTRING}\).*:\1:g");
+    STREAMID=$(echo ${URL} | grep 'id=' | sed -e "s:.*id=\(${USERSTRING}\).*:\1:g");
+
+    if [ -z "${STREAMTYPE}" ] || [ -z "${STREAMPATH}" ] || [ -z "${STREAMID}" ];
+    then
+      echo "  Request does not contain type, path AND id parameters";
+      continue;
+    fi
+
+    echo "${STREAMTYPE}#${STREAMPATH}#${STREAMID}" > ${TMPDIR}/list;
+
+    evaluateStreams;
   done
 };
 
@@ -184,6 +228,7 @@ echo "CLASS  = ${CLASS}";
 echo "PORT   = ${PORT}";
 echo "";
 
+# Retrieve configuration variables from central configuration repository
 setConfigurationVariables;
 
 if [ -n "${PORT}" ];
