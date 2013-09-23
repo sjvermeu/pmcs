@@ -34,9 +34,10 @@ If `<type>` is `oval`, then `<id>` is the OVAL id
 The following pseudo code shows how pmcsa functions for the scheduled run.
 
 ```
-FQDN   = get system fully qualified hostname
-DOMAIN = get system domain name (or "localdomain" if empty)
-CLASS  = get system class
+FQDN      = get system fully qualified hostname
+DOMAIN    = get system domain name (or "localdomain" if empty)
+CLASS     = get system class
+LOCALDATE = get system date (YYYYMMDD format)
 
 POSSIBLE_TARGETS = 
   <repo-urn>/config/domains/DOMAIN.conf
@@ -81,9 +82,11 @@ for each STREAM in STREAMS
   send XCCDFRESULT to RESULTREPO if exists
     Substitute @@TARGETNAME@@ with FQDN
     Substitute @@FILENAME@@ with XCCDFRESULT file name
+    Substitute @@DATE@@ with LOCALDATE value
   send OVALDSRESULT to RESULTREPO if exists
     Substitute @@TARGETNAME@@ with FQDN
     Substitute @@FILENAME@@ with OVALRESULT file name
+    Substitute @@DATE@@ with LOCALDATE value
 ```
 
 As the evaluation of a data stream could lead to multiple result files (one

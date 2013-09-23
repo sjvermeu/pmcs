@@ -13,6 +13,7 @@ SCAPSCANOVAL=""
 SCAPSCANOVAL_NOID=""
 SCAPSCANXCCDF=""
 SCAPSCANXCCDF_NOPROFILE=""
+LOCALDATE=$(date +%Y%m%d)
 
 CDIR=$(pwd);
 
@@ -138,7 +139,7 @@ getStreamList() {
 sendResults() {
   FILE=$1;
   REPOTYPE=$(echo ${RESULTREPO} | cut -f 1 -d ':' -s);
-  POSTRES=$(echo ${RESULTREPO} | sed -e "s:@@TARGETNAME@@:${FQDN}:g" -e "s:@@FILENAME@@:${FILE}:g");
+  POSTRES=$(echo ${RESULTREPO} | sed -e "s:@@TARGETNAME@@:${FQDN}:g" -e "s:@@FILENAME@@:${FILE}:g" -e "s:@@DATE@@:${LOCALDATE}:g");
 
   echo "Sending ${FILE} to ${POSTRES}.";
 
@@ -285,11 +286,12 @@ echo "Poor Man Central SCAP Agent v0.1";
 echo "";
 
 echo "Detected local variables from system.";
-echo "REPO   = ${REPO}";
-echo "FQDN   = ${FQDN}";
-echo "DOMAIN = ${DOMAIN}";
-echo "CLASS  = ${CLASS}";
-echo "PORT   = ${PORT}";
+echo "REPO      = ${REPO}";
+echo "FQDN      = ${FQDN}";
+echo "DOMAIN    = ${DOMAIN}";
+echo "CLASS     = ${CLASS}";
+echo "PORT      = ${PORT}";
+echo "LOCALDATE = ${LOCALDATE}";
 echo "";
 
 # Retrieve configuration variables from central configuration repository
