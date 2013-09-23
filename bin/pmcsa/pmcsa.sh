@@ -10,7 +10,9 @@ PLATFORM=""
 KEYWORDS=""
 RESULTREPO=""
 SCAPSCANOVAL=""
+SCAPSCANOVAL_NOID=""
 SCAPSCANXCCDF=""
+SCAPSCANXCCDF_NOPROFILE=""
 
 CDIR=$(pwd);
 
@@ -21,6 +23,43 @@ die() {
   RC=$1; shift;
   echo "!! $*";
   exit ${RC};
+}
+
+copyResourceToLocal() {
+  SRC="$1"
+  DST="$2"
+  RC=0;
+
+  PROTO=$(echo ${SRC} | sed -e 's|\([^:]*\):.*|\1|g');
+  if [ "${PROTO}" = "file" ];
+  then
+    LOCALSRC=$(echo ${SRC} | sed -e 's|^[^:]*://||g');
+    cp ${LOCALSRC} ${DST};
+    RC=$?;
+  elif [ "${PROTO}" = "http" ] || [ "${PROTO}" = "https" ];
+  then
+    wget -q -O ${DST} ${SRC};
+    RC=$?;
+  fi
+
+  return ${RC};
+}
+
+copyResourceToRemote() {
+  SRC="$1";
+  DST="$2";
+  RC=0;
+
+  PROTO=$(echo ${DST} | sed -e 's|\([^:]*\):.*|\1|g');
+  if [ "${PROTO}" = "file" ];
+  then
+    REMOTEDST=$(echo ${DST} | sed -e 's|^[^:]*://||g');
+    cp ${SRC} ${REMOTEDST};
+    RC=$?;
+  elif [ "${PROTO}" = "http" ] || [ "${PROTO}" = "https" ];
+  then
+    wget --post-file="${SRC}" "${DST}";
+  fi;
 }
 
 setConfigurationVariables() {
@@ -35,23 +74,27 @@ setConfigurationVariables() {
 
   for REPO_URL in ${REPO_URLS};
   do
-    wget -q -O ${TMPDIR}/config ${REPO_URL};
+    copyResourceToLocal ${REPO_URL} ${TMPDIR}/config;
     if [ $? -eq 0 ];
     then
       grep -q ^platform= ${TMPDIR}/config && PLATFORM=$(grep ^platform= ${TMPDIR}/config | cut -f 2 -d '=');
       grep -q ^resultrepo= ${TMPDIR}/config && RESULTREPO=$(grep ^resultrepo= ${TMPDIR}/config | cut -f 2 -d '=');
       grep -q ^scapscanneroval= ${TMPDIR}/config && SCAPSCANOVAL=$(grep ^scapscanneroval= ${TMPDIR}/config | cut -f 2 -d '=');
+      grep -q ^scapscanneroval_noid= ${TMPDIR}/config && SCAPSCANOVAL_NOID=$(grep ^scapscanneroval_noid= ${TMPDIR}/config | cut -f 2 -d '=');
       grep -q ^scapscannerxccdf= ${TMPDIR}/config && SCAPSCANXCCDF=$(grep ^scapscannerxccdf= ${TMPDIR}/config | cut -f 2 -d '=');
+      grep -q ^scapscannerxccdf_noprofile= ${TMPDIR}/config && SCAPSCANXCCDF_NOPROFILE=$(grep ^scapscannerxccdf_noprofile= ${TMPDIR}/config | cut -f 2 -d '=');
       grep -q ^keywords= ${TMPDIR}/config && KEYWORDS="${KEYWORDS},$(grep ^keywords= ${TMPDIR}/config | cut -f 2 -d '=')";
       rm ${TMPDIR}/config;
     fi
   done
 
-  echo "PLATFORM      = ${PLATFORM}";
-  echo "RESULTREPO    = ${RESULTREPO}";
-  echo "KEYWORDS      = ${KEYWORDS}";
-  echo "SCAPSCANOVAL  = ${SCAPSCANOVAL}";
-  echo "SCAPSCANXCCDF = ${SCANSCANXCCDF}";
+  echo "PLATFORM                = ${PLATFORM}";
+  echo "RESULTREPO              = ${RESULTREPO}";
+  echo "KEYWORDS                = ${KEYWORDS}";
+  echo "SCAPSCANOVAL            = ${SCAPSCANOVAL}";
+  echo "SCAPSCANOVAL_NOID       = ${SCAPSCANOVAL_NOID}";
+  echo "SCAPSCANXCCDF           = ${SCAPSCANXCCDF}";
+  echo "SCAPSCANXCCDF_NOPROFILE = ${SCAPSCANXCCDF_NOPROFILE}";
   echo "";
 }
 
@@ -69,7 +112,7 @@ getStreamList() {
 
   for REPO_URL in ${REPO_URLS};
   do
-    wget -q -O ${TMPDIR}/sublist ${REPO_URL};
+    copyResourceToLocal ${REPO_URL} ${TMPDIR}/sublist;
     if [ $? -eq 0 ];
     then
       cat ${TMPDIR}/sublist >> ${TMPDIR}/list;
@@ -78,7 +121,7 @@ getStreamList() {
 
   for KEYWORD in $(echo ${KEYWORDS} | sed -e 's:,: :g');
   do
-    wget -q -O ${TMPDIR}/sublist ${REPO}/stream/keywords/${KEYWORD}/list.conf;
+    copyResourceToLocal ${REPO}/stream/keywords/${KEYWORD}/list.conf ${TMPDIR}/sublist;
     if [ $? -eq 0 ];
     then
       cat ${TMPDIR}/sublist >> ${TMPDIR}/list;
@@ -99,13 +142,7 @@ sendResults() {
 
   echo "Sending ${FILE} to ${POSTRES}.";
 
-  if [ "${REPOTYPE}" = "file" ];
-  then
-    cp ${FILE} ${POSTRES##file://};
-  elif [ "${REPOTYPE}" = "http" ] || [ "{REPOTYPE}" = "https" ];
-  then
-    wget --post-file=${FILE} "${POSTRES}";
-  fi
+  copyResourceToRemote ${FILE} ${POSTRES};
 };
 
 daemonize() {
@@ -171,28 +208,49 @@ evaluateStreams() {
     echo "-- Evaluating STREAM ${STREAMPATH} (type ${STREAMTYPE}, id ${STREAMID})";
     echo "";
     STREAMNAME=$(basename ${STREAMPATH});
-    wget -q -O ${TMPDIR}/${STREAMNAME} ${REPO}/stream/${STREAMPATH};
+    copyResourceToLocal ${REPO}/stream/${STREAMPATH} ${TMPDIR}/${STREAMNAME};
     if [ $? -eq 0 ];
     then
       if [ "${STREAMTYPE}" = "xccdf" ];
       then
-        CMD=$(echo "${SCAPSCANXCCDF}" | sed -e "s:@@STREAMNAME@@:${STREAMNAME}:g" -e "s:@@RESULTNAME@@:${STREAMNAME%%.xml}-results.xml:g" -e "s:@@STREAMID@@:${STREAMID}:g");
+        if [ -z "${STREAMID}" ];
+	then
+          CMD=$(echo "${SCAPSCANXCCDF_NOPROFILE}" | sed -e "s:@@STREAMNAME@@:${STREAMNAME}:g" -e "s:@@XCCDFRESULTNAME@@:${STREAMNAME%%.xml}-xccdf-results.xml:g" -e "s:@@OVALRESULTNAME@@:${STREAMNAME%%.xml}-oval-results.xml:g");
+	else
+          CMD=$(echo "${SCAPSCANXCCDF}" | sed -e "s:@@STREAMNAME@@:${STREAMNAME}:g" -e "s:@@XCCDFRESULTNAME@@:${STREAMNAME%%.xml}-xccdf-results.xml:g" -e "s:@@OVALRESULTNAME@@:${STREAMNAME%%.xml}-oval-results.xml:g" -e "s:@@STREAMID@@:${STREAMID}:g");
+	fi
 	echo "Running ${CMD}";
 	cd ${TMPDIR};
 	${CMD};
-	sendResults ${STREAMNAME%%.xml}-results.xml;
+	sendResults ${STREAMNAME%%.xml}-xccdf-results.xml;
+	# Hack because oscap does not allow providing filename for oval results
+        OVALFILES=$(grep check-content-ref.*oval: ${STREAMNAME} | sed -e 's:.*href="\([^"]*\)".*:\1:g' | sort | uniq);
+	for OVALFILE in ${OVALFILES};
+	do
+          sendResults ${OVALFILE}.result.xml;
+	done
+	# Now send oval results if they exist
+        if [ -f ${STREAMNAME%%.xml}-oval-results.xml ];
+	then
+          sendResults ${STREAMNAME%%.xml}-oval-results.xml;
+	fi
       elif [ "${STREAMTYPE}" = "oval" ];
       then
-        CMD=$(echo "${SCAPSCANOVAL}" | sed -e "s:@@STREAMNAME@@:${STREAMNAME}:g" -e "s:@@RESULTNAME@@:${STREAMNAME%%.xml}-results.xml:g" -e "s:@@STREAMID@@:${STREAMID}:g");
+        if [ -z "${STREAMID}" ];
+	then
+          CMD=$(echo "${SCAPSCANOVAL_NOID}" | sed -e "s:@@STREAMNAME@@:${STREAMNAME}:g" -e "s:@@OVALRESULTNAME@@:${STREAMNAME%%.xml}-oval-results.xml:g");
+	else
+          CMD=$(echo "${SCAPSCANOVAL}" | sed -e "s:@@STREAMNAME@@:${STREAMNAME}:g" -e "s:@@OVALRESULTNAME@@:${STREAMNAME%%.xml}-oval-results.xml:g" -e "s:@@STREAMID@@:${STREAMID}:g");
+	fi
 	echo "Running ${CMD}";
 	cd ${TMPDIR};
 	${CMD};
-	sendResults ${STREAMNAME%%.xml}-results.xml;
+	sendResults ${STREAMNAME%%.xml}-oval-results.xml;
       else
         echo "!! Type ${STREAMTYPE} is not known.";
       fi;
     else
-      echo "!! Stream ${REPO}/stream/${STREAM} could not be found";
+      echo "!! Stream ${REPO}/stream/${STREAMPATH} could not be found";
     fi
     echo "";
   done
