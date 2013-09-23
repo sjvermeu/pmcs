@@ -97,6 +97,11 @@ Bind webserver-functionality on PORT (argument)
 for each REQUEST
   if REQUEST != (GET|HEAD) /Evaluate?type=STREAMTYPE&path=STREAMPATH&id=STREAMID HTTP/1.(0|1)
     ignore request
+  STREAMTYPE = get STREAMTYPE from REQUEST
+  STREAMPATH = get STREAMPATH from REQUEST
+  STREAMID   = get STREAMID from REQUEST
+
+  write "STREAMTYPE#STREAMPATH#STREAMID" in STREAMS
   
   (reuse STREAM handling code from previous part)
 ```
