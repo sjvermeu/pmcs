@@ -12,4 +12,5 @@ Python has a built-in web server. To call it:
 ~$ python -m http.server 8080
 ```
 
-This will serve the documents from the current working directory.
+This will serve the documents from the current working directory. If you want to
+enable CGI, add `--cgi` to the command line (Python 3.3 onwards).
