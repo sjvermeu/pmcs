@@ -95,7 +95,7 @@ both. Hence the `DSRESULT` and `DSRESULT2` variables.
 Bind webserver-functionality on PORT (argument)
 
 for each REQUEST
-  if REQUEST != GET /Evaluate?type=STREAMTYPE&path=STREAMPATH&id=STREAMID HTTP/1.0
+  if REQUEST != (GET|HEAD) /Evaluate?type=STREAMTYPE&path=STREAMPATH&id=STREAMID HTTP/1.(0|1)
     ignore request
   
   (reuse STREAM handling code from previous part)
