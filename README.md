@@ -33,6 +33,10 @@ a set of system parameters (hostname, domainname, platform, class and generic
 keywords). They evaluate the SCAP data stream(s) and send back the reports
 towards a central repository.
 
+Currently, the two "central" locations supported are regular file systems (in
+case of file shares), using "file://" as the "remote" pointer, and web servers,
+using "http://" or "https://" as "remote" pointer.
+
 SCAP content repositories
 -------------------------
 
