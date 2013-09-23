@@ -58,7 +58,7 @@ copyResourceToRemote() {
     RC=$?;
   elif [ "${PROTO}" = "http" ] || [ "${PROTO}" = "https" ];
   then
-    wget --post-file="${SRC}" "${DST}";
+    curl -s -X POST -F "filecontent=@${SRC}" "${DST}" > /dev/null;
   fi;
 }
 
@@ -77,13 +77,13 @@ setConfigurationVariables() {
     copyResourceToLocal ${REPO_URL} ${TMPDIR}/config;
     if [ $? -eq 0 ];
     then
-      grep -q ^platform= ${TMPDIR}/config && PLATFORM=$(grep ^platform= ${TMPDIR}/config | cut -f 2 -d '=');
-      grep -q ^resultrepo= ${TMPDIR}/config && RESULTREPO=$(grep ^resultrepo= ${TMPDIR}/config | cut -f 2 -d '=');
-      grep -q ^scapscanneroval= ${TMPDIR}/config && SCAPSCANOVAL=$(grep ^scapscanneroval= ${TMPDIR}/config | cut -f 2 -d '=');
-      grep -q ^scapscanneroval_noid= ${TMPDIR}/config && SCAPSCANOVAL_NOID=$(grep ^scapscanneroval_noid= ${TMPDIR}/config | cut -f 2 -d '=');
-      grep -q ^scapscannerxccdf= ${TMPDIR}/config && SCAPSCANXCCDF=$(grep ^scapscannerxccdf= ${TMPDIR}/config | cut -f 2 -d '=');
-      grep -q ^scapscannerxccdf_noprofile= ${TMPDIR}/config && SCAPSCANXCCDF_NOPROFILE=$(grep ^scapscannerxccdf_noprofile= ${TMPDIR}/config | cut -f 2 -d '=');
-      grep -q ^keywords= ${TMPDIR}/config && KEYWORDS="${KEYWORDS},$(grep ^keywords= ${TMPDIR}/config | cut -f 2 -d '=')";
+      grep -q ^platform= ${TMPDIR}/config && PLATFORM=$(grep ^platform= ${TMPDIR}/config | sed -e 's|^[^=]*=||g');
+      grep -q ^resultrepo= ${TMPDIR}/config && RESULTREPO=$(grep ^resultrepo= ${TMPDIR}/config | sed -e 's|^[^=]*=||g');
+      grep -q ^scapscanneroval= ${TMPDIR}/config && SCAPSCANOVAL=$(grep ^scapscanneroval= ${TMPDIR}/config | sed -e 's|^[^=]*=||g');
+      grep -q ^scapscanneroval_noid= ${TMPDIR}/config && SCAPSCANOVAL_NOID=$(grep ^scapscanneroval_noid= ${TMPDIR}/config | sed -e 's|^[^=]*=||g');
+      grep -q ^scapscannerxccdf= ${TMPDIR}/config && SCAPSCANXCCDF=$(grep ^scapscannerxccdf= ${TMPDIR}/config | sed -e 's|^[^=]*=||g');
+      grep -q ^scapscannerxccdf_noprofile= ${TMPDIR}/config && SCAPSCANXCCDF_NOPROFILE=$(grep ^scapscannerxccdf_noprofile= ${TMPDIR}/config | sed -e 's|^[^=]*=||g');
+      grep -q ^keywords= ${TMPDIR}/config && KEYWORDS="${KEYWORDS},$(grep ^keywords= ${TMPDIR}/config | sed -e 's|^[^=]*=||g')";
       rm ${TMPDIR}/config;
     fi
   done
@@ -268,6 +268,12 @@ else
   REPO="${1}";
 fi
 
+
+if [ -z "${REPO}" ];
+then
+  echo "Usage: $0 [ -d <port> ] <repository>"
+  exit 1;
+fi
 
 # We are a shell script, so 'unix' seems obvious (for now)
 CLASS="unix"

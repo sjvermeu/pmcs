@@ -45,11 +45,14 @@ POSSIBLE_TARGETS =
   <repo-urn>/config/hosts/FQDN.conf
 
 Fetch configuration from POSSIBLE_TARGETS (overriding values):
-  PLATFORM       = get platform from configuration
-  KEYWORDS       = get keywords from configuration (comma separated)
-  RESULTREPO     = get resultrepo from configuration
-  SCAPSCANOVAL   = get scapscanneroval from configuration
-  SCAPSCANXCCDF  = get scapscannerxccdf from configuration
+  PLATFORM                = get platform from configuration
+  KEYWORDS                = get keywords from configuration (comma separated)
+  RESULTREPO              = get resultrepo from configuration
+  SCAPSCANOVAL            = get scapscanneroval from configuration
+  SCAPSCANOVAL_NOID       = get scapscanneroval_noid from configuration
+  SCAPSCANXCCDF           = get scapscannerxccdf from configuration
+  SCAPSCANXCCDF_NOPROFILE = get scapscannerxccdf_noprofile from configuration
+
 
 STREAM_LISTS = 
   <repo-urn>/stream/hosts/FQDN/list.conf
@@ -69,18 +72,18 @@ for each STREAM in STREAMS
   DATASTREAMFILE = fetch <repo-urn>/stream/STREAMPATH
 
   ## SCAPSCAN{STREAMTYPE} -> depends on type!
-  {DSRESULT, DSRESULT2}       = evaluate DATASTREAMFILE using SCAPSCAN{STREAMTYPE}
+  ## (_NO*)? if no id or profile given
+  {XCCDFRESULT, OVALRESULT}       = evaluate DATASTREAMFILE using SCAPSCAN{STREAMTYPE}(_NO*)?
     Substitute @@STREAMNAME@@ with path to DATASTREAMFILE
-    Substitute @@RESULTNAME@@ with path to DSRESULT
-    Substitute @@2NDRESULTNAME@@ with path to DSRESULT2
+    Substitute @@XCCDFRESULTNAME@@ with path to XCCDFRESULT
+    Substitute @@OVALRESULTNAME@@ with path to OVALRESULT
     Substitute @@STREAMID@@ with STREAMID
-  send DSRESULT to RESULTREPO
+  send XCCDFRESULT to RESULTREPO if exists
     Substitute @@TARGETNAME@@ with FQDN
-    Substitute @@FILENAME@@ with DSRESULT file name
-  if DSRESULT2 exists
-    send DSRESULT2 to RESULTREPO
-      Substitute @@TARGETNAME@@ with FQDN
-      Substitute @@FILENAME@@ with DSRESULT2 file name
+    Substitute @@FILENAME@@ with XCCDFRESULT file name
+  send OVALDSRESULT to RESULTREPO if exists
+    Substitute @@TARGETNAME@@ with FQDN
+    Substitute @@FILENAME@@ with OVALRESULT file name
 ```
 
 As the evaluation of a data stream could lead to multiple result files (one
