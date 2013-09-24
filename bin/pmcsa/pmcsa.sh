@@ -35,8 +35,13 @@ copyResourceToLocal() {
   if [ "${PROTO}" = "file" ];
   then
     LOCALSRC=$(echo ${SRC} | sed -e 's|^[^:]*://||g');
-    cp ${LOCALSRC} ${DST};
-    RC=$?;
+    if [ -f ${LOCALSRC} ];
+    then
+      cp ${LOCALSRC} ${DST};
+      RC=$?;
+    else
+      RC=1;
+    fi
   elif [ "${PROTO}" = "http" ] || [ "${PROTO}" = "https" ];
   then
     wget -q -O ${DST} ${SRC};
@@ -55,6 +60,8 @@ copyResourceToRemote() {
   if [ "${PROTO}" = "file" ];
   then
     REMOTEDST=$(echo ${DST} | sed -e 's|^[^:]*://||g');
+    REMOTEDIR=$(dirname ${REMOTEDST});
+    mkdir -p ${REMOTEDIR};
     cp ${SRC} ${REMOTEDST};
     RC=$?;
   elif [ "${PROTO}" = "http" ] || [ "${PROTO}" = "https" ];
