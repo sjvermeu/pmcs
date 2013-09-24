@@ -138,8 +138,16 @@ getStreamList() {
 
 sendResults() {
   FILE=$1;
+  FILENAME=$2;
   REPOTYPE=$(echo ${RESULTREPO} | cut -f 1 -d ':' -s);
-  POSTRES=$(echo ${RESULTREPO} | sed -e "s:@@TARGETNAME@@:${FQDN}:g" -e "s:@@FILENAME@@:${FILE}:g" -e "s:@@DATE@@:${LOCALDATE}:g");
+  POSTRES="";
+
+  if [ -z "${FILENAME}" ];
+  then
+    POSTRES=$(echo ${RESULTREPO} | sed -e "s:@@TARGETNAME@@:${FQDN}:g" -e "s:@@FILENAME@@:${FILE}:g" -e "s:@@DATE@@:${LOCALDATE}:g");
+  else
+    POSTRES=$(echo ${RESULTREPO} | sed -e "s:@@TARGETNAME@@:${FQDN}:g" -e "s:@@FILENAME@@:${FILENAME}:g" -e "s:@@DATE@@:${LOCALDATE}:g");
+  fi
 
   echo "Sending ${FILE} to ${POSTRES}.";
 
@@ -230,7 +238,7 @@ evaluateStreams() {
         OVALFILES=$(grep check-content-ref.*oval: ${STREAMNAME} | sed -e 's:.*href="\([^"]*\)".*:\1:g' | sort | uniq);
 	for OVALFILE in ${OVALFILES};
 	do
-          sendResults ${OVALFILE}.result.xml;
+          sendResults ${OVALFILE}.result.xml ${STREAMRESULTID}-oval-results.xml.${OVALFILE};
 	done
 	# Now send oval results if they exist
         if [ -f ${STREAMRESULTID}-oval-results.xml ];
