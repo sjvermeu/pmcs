@@ -48,10 +48,17 @@ reportInDir() {
 buildServerReport() {
   CHECKDIR="${1}";
   SUBDIR="${2}";
-  echo "<html>" > ${CHECKDIR}/index.html;
+  echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" >> ${CHECKDIR}/index.html;
+  echo "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\" \"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">" >> ${CHECKDIR}/index.html;
+  echo "<html ns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"en\">" > ${CHECKDIR}/index.html;
   echo "<head><title>Host report ${SUBDIR}</title><link rel=\"stylesheet\" href=\"../../style.css\" type=\"text/css\" /></head>" >> ${CHECKDIR}/index.html;
   echo "<body>" >> ${CHECKDIR}/index.html;
-  echo "<h2>Definitions for ${SUBDIR}</h2>" >> ${CHECKDIR}/index.html;
+  echo "<h1>Host report for ${SUBDIR}</h1>" >> ${CHECKDIR}/index.html;
+  echo "<h2>Table of Contents</h2>" >> ${CHECKDIR}/index.html;
+  echo "<ul>" >> ${CHECKDIR}/index.html;
+  echo "<li><a href=\"#definitions\">OVAL definition results</a></li>" >> ${CHECKDIR}/index.html;
+  echo "</ul>" >> ${CHECKDIR}/index.html;
+  echo "<h2 id=\"definitions\">Definitions for ${SUBDIR}</h2>" >> ${CHECKDIR}/index.html;
   echo "<table>" >> ${CHECKDIR}/index.html;
   echo "<tr><th>Definition</th><th>Result</th><th>Affiliated test</th><th>Test result</th><th>Test data</th></tr>" >> ${CHECKDIR}/index.html;
   for DEF in $(cat ${CHECKDIR}/server-definitions.csv | awk -F',' '{print $1}');
@@ -60,7 +67,13 @@ buildServerReport() {
     DEFINFO=$(grep "^${DEF}," ${REPORTDIR}/definitions.csv | cut -f 3- -d ',');
     ESCDEF=$(echo ${DEF} | sed -e 's|:|_|g');
     TESTCNT=$(wc -l  ${REPORTDIR}/definitions/${ESCDEF}_dependencies.csv | awk '{print $1}');
-    echo "<tr><td rowspan=\"$((${TESTCNT}+1))\">" >> ${CHECKDIR}/index.html;
+    if [ "${DEFRESULT}" = "false" ];
+    then
+      echo "<tr class=\"highlight\">" >> ${CHECKDIR}/index.html;
+    else
+      echo "<tr>" >> ${CHECKDIR}/index.html;
+    fi
+    echo "<td rowspan=\"$((${TESTCNT}+1))\">" >> ${CHECKDIR}/index.html;
     echo "<b><a href=\"../../definitions/${ESCDEF}.txt\">${DEF}</a></b><br />${DEFINFO}" >> ${CHECKDIR}/index.html;
     echo "</td><td rowspan=\"$((${TESTCNT}+1))\">${DEFRESULT}</td><td /><td /><td /></tr>" >> ${CHECKDIR}/index.html;
     for TEST in $(cat ${REPORTDIR}/definitions/${ESCDEF}_dependencies.csv | awk -F',' '{print $1}');
@@ -75,7 +88,12 @@ buildServerReport() {
 	IRESULT=${INSTANCE_RESULT##*-};
 	INSTANCES="${INSTANCES}<a href=\"instance-${INSTANCE}.txt\">${INSTANCE} [${IRESULT}]</a><br />";
       done
-      echo "<tr>" >> ${CHECKDIR}/index.html;
+      if [ "${TESTRESULT}" = "false" ];
+      then
+        echo "<tr class=\"highlight\">" >> ${CHECKDIR}/index.html;
+      else
+        echo "<tr>" >> ${CHECKDIR}/index.html;
+      fi
       echo "<td><a href=\"../../tests/${ESCTEST}.txt\">${TEST}</a><br />${TESTINFO}</td>" >> ${CHECKDIR}/index.html;
       echo "<td>${TESTRESULT}</td><td>${INSTANCES}</td>" >> ${CHECKDIR}/index.html;
       echo "</tr>" >> ${CHECKDIR}/index.html;

@@ -1,3 +1,7 @@
 td {
   background-color: #eee;
 };
+
+tr#highlight {
+  background-color: #ED2939;
+};
