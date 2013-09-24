@@ -110,7 +110,6 @@ Sometimes administrators want to push out certain checks towards one or more
 systems without having to wait for a particular scheduled run. We need to
 support this, which means that the pmcsa (pmsc agent) will also support a
 daemonized setup to which administrators can push evaluation requests.
-```
 
 What pmcs does not provide
 --------------------------
