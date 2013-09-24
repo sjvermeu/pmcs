@@ -67,14 +67,17 @@ STREAM_LISTS =
 STREAMS = Concatenate stream identifiers from all list.conf files
 
 for each STREAM in STREAMS
-  STREAMTYPE     = STREAM[0] # separated
-  STREAMPATH     = STREAM[1] # separated
-  STREAMID       = STREAM[2] # separated
+  STREAMTYPE     = STREAM[1] # separated
+  STREAMRESULTID = STREAM[2] # separated
+  STREAMPATH     = STREAM[3] # separated
+  STREAMID       = STREAM[4] # separated
   DATASTREAMFILE = fetch <repo-urn>/stream/STREAMPATH
 
   ## SCAPSCAN{STREAMTYPE} -> depends on type!
   ## (_NO*)? if no id or profile given
   {XCCDFRESULT, OVALRESULT}       = evaluate DATASTREAMFILE using SCAPSCAN{STREAMTYPE}(_NO*)?
+    XCCDFRESULT = STREAMRESULTID-xccdf-results.xml
+    OVALRESULT  = STREAMRESULTID-oval-results.xml
     Substitute @@STREAMNAME@@ with path to DATASTREAMFILE
     Substitute @@XCCDFRESULTNAME@@ with path to XCCDFRESULT
     Substitute @@OVALRESULTNAME@@ with path to OVALRESULT
@@ -101,13 +104,14 @@ both. Hence the `DSRESULT` and `DSRESULT2` variables.
 Bind webserver-functionality on PORT (argument)
 
 for each REQUEST
-  if REQUEST != (GET|HEAD) /Evaluate?type=STREAMTYPE&path=STREAMPATH&id=STREAMID HTTP/1.(0|1)
+  if REQUEST != (GET|HEAD) /Evaluate?type=STREAMTYPE&resultid=STREAMRESULTID&path=STREAMPATH&id=STREAMID HTTP/1.(0|1)
     ignore request
-  STREAMTYPE = get STREAMTYPE from REQUEST
-  STREAMPATH = get STREAMPATH from REQUEST
-  STREAMID   = get STREAMID from REQUEST
+  STREAMTYPE     = get STREAMTYPE from REQUEST
+  STREAMRESULTID = get STREAMRESULTID from REQUEST
+  STREAMPATH     = get STREAMPATH from REQUEST
+  STREAMID       = get STREAMID from REQUEST
 
-  write "STREAMTYPE#STREAMPATH#STREAMID" in STREAMS
+  write "STREAMTYPE#STREAMRESULTID#STREAMPATH#STREAMID" in STREAMS
   
   (reuse STREAM handling code from previous part)
 ```

@@ -121,11 +121,14 @@ The URI with `${KEYWORD}` is evaluated for each keyword assigned to the system.
 The `list.conf` file obtained from the repository uses the following syntax:
 
 ```
-<type>#<streamfile>#[<id>]
+<type>#<resultid>#<streamfile>#[<id>]
 ```
 
 * The `<type>` is either `oval` or `xccdf` and informs the pmcs agent which type
   of SCAP content is going to be evaluated.
+* The `<resultid>` is a _unique_ identifier that identifies how the result files
+  should be stored. XCCDF results will be stored as `<resultid>-xccdf-results.xml`
+  whereas OVAL results are stored as `<resultid>-oval-results.xml`.
 * The `<streamfile>` is the relative URI, starting from the `stream/` folder,
   that the agent will need to fetch.
 * The `<id>` is an optional identifier telling the agent what OVAL id or XCCDF
@@ -134,9 +137,9 @@ The `list.conf` file obtained from the repository uses the following syntax:
 An example list file:
 
 ```
-oval#classes/unix/vulnerabilities.xml#
-xccdf#domains/localdomain/benchmarks/postgresql-benchmark.xml#xccdf_org.gentoo.dev.swift_profile_default
-oval#domains/localdomain/classes/unix/inv.xml#oval:org.gentoo.dev.swift:def:4432
+oval#vuln#classes/unix/vulnerabilities.xml#
+xccdf#pgsql-scb#domains/localdomain/benchmarks/postgresql-benchmark.xml#xccdf_org.gentoo.dev.swift_profile_default
+oval#inventory#domains/localdomain/classes/unix/inv.xml#oval:org.gentoo.dev.swift:def:4432
 ```
 
 pmcs agent

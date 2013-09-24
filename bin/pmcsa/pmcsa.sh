@@ -78,7 +78,7 @@ setConfigurationVariables() {
     copyResourceToLocal ${REPO_URL} ${TMPDIR}/config;
     if [ $? -eq 0 ];
     then
-      grep -q ^platform= ${TMPDIR}/config && PLATFORM=$(grep ^platform= ${TMPDIR}/config | sed -e 's|^[^=]*=||g');
+      grep -q ^platform= ${TMPDIR}/config && PLATFORM=$(grep ^platform= ${TMPDIR}/config | sed -e 's|^[^=]*=||g' | sed -e 's:[^a-zA-Z0-9]:_:g');
       grep -q ^resultrepo= ${TMPDIR}/config && RESULTREPO=$(grep ^resultrepo= ${TMPDIR}/config | sed -e 's|^[^=]*=||g');
       grep -q ^scapscanneroval= ${TMPDIR}/config && SCAPSCANOVAL=$(grep ^scapscanneroval= ${TMPDIR}/config | sed -e 's|^[^=]*=||g');
       grep -q ^scapscanneroval_noid= ${TMPDIR}/config && SCAPSCANOVAL_NOID=$(grep ^scapscanneroval_noid= ${TMPDIR}/config | sed -e 's|^[^=]*=||g');
@@ -167,7 +167,7 @@ daemonize() {
 
   # expression matching
   USERSTRING="[a-zA-Z0-9_-/\.]*"
-  URLSTRING="(type|path|id)"
+  URLSTRING="(type|path|id|result)"
 
   while [ ${RC} -eq 0 ]; 
   do
@@ -177,24 +177,25 @@ daemonize() {
     REMHOST=$(echo "${OUT}" | grep '^connect to' | sed -e 's:.* from \(.*\)[ 	][0-9]*:\1:g');
 
     echo "Request from '${REMHOST}': ${URL}";
-    echo "${URL}" | grep -qE "/Evaluate\?${URLSTRING}=${USERSTRING}\&${URLSTRING}=${USERSTRING}\&${URLSTRING}=${USERSTRING}";
+    echo "${URL}" | grep -qE "/Evaluate\?${URLSTRING}=${USERSTRING}\&${URLSTRING}=${USERSTRING}\&${URLSTRING}=${USERSTRING}\&${URLSTRING}=${USERSTRING}";
     if [ $? -ne 0 ];
     then
-      echo "  Request does not match required '/Evaluate' with parameters type, path and id";
+      echo "  Request does not match required '/Evaluate' with parameters type, path, result and id";
       continue;
     fi
 
     STREAMTYPE=$(echo ${URL} | grep 'type=' | sed -e "s:.*type=\(${USERSTRING}\).*:\1:g");
     STREAMPATH=$(echo ${URL} | grep 'path=' | sed -e "s:.*path=\(${USERSTRING}\).*:\1:g");
+    STREAMRESULTID=$(echo ${URL} | grep 'result=' | sed -e "s:.*result=\(${USERSTRING}\).*:\1:g");
     STREAMID=$(echo ${URL} | grep 'id=' | sed -e "s:.*id=\(${USERSTRING}\).*:\1:g");
 
-    if [ -z "${STREAMTYPE}" ] || [ -z "${STREAMPATH}" ] || [ -z "${STREAMID}" ];
+    if [ -z "${STREAMTYPE}" ] || [ -z "${STREAMPATH}" ] || [ -z "${STREAMID}" ] || [ -z "${STREAMRESULTID}" ];
     then
-      echo "  Request does not contain type, path AND id parameters";
+      echo "  Request does not contain type, path, result AND id parameters";
       continue;
     fi
 
-    echo "${STREAMTYPE}#${STREAMPATH}#${STREAMID}" > ${TMPDIR}/list;
+    echo "${STREAMTYPE}#${STREAMRESULTID}#${STREAMPATH}#${STREAMID}" > ${TMPDIR}/list;
 
     evaluateStreams;
   done
@@ -204,8 +205,9 @@ evaluateStreams() {
   for STREAM in $(cat ${TMPDIR}/list);
   do
     STREAMTYPE=$(echo ${STREAM} | cut -f 1 -d '#' -s);
-    STREAMPATH=$(echo ${STREAM} | cut -f 2 -d '#' -s);
-    STREAMID=$(echo ${STREAM} | cut -f 3 -d '#' -s);
+    STREAMRESULTID=$(echo ${STREAM} | cut -f 2 -d '#' -s);
+    STREAMPATH=$(echo ${STREAM} | cut -f 3 -d '#' -s);
+    STREAMID=$(echo ${STREAM} | cut -f 4 -d '#' -s);
     echo "-- Evaluating STREAM ${STREAMPATH} (type ${STREAMTYPE}, id ${STREAMID})";
     echo "";
     STREAMNAME=$(basename ${STREAMPATH});
@@ -216,14 +218,14 @@ evaluateStreams() {
       then
         if [ -z "${STREAMID}" ];
 	then
-          CMD=$(echo "${SCAPSCANXCCDF_NOPROFILE}" | sed -e "s:@@STREAMNAME@@:${STREAMNAME}:g" -e "s:@@XCCDFRESULTNAME@@:${STREAMNAME%%.xml}-xccdf-results.xml:g" -e "s:@@OVALRESULTNAME@@:${STREAMNAME%%.xml}-oval-results.xml:g");
+          CMD=$(echo "${SCAPSCANXCCDF_NOPROFILE}" | sed -e "s:@@STREAMNAME@@:${STREAMNAME}:g" -e "s:@@XCCDFRESULTNAME@@:${STREAMRESULTID}-xccdf-results.xml:g" -e "s:@@OVALRESULTNAME@@:${STREAMRESULTID}-oval-results.xml:g");
 	else
-          CMD=$(echo "${SCAPSCANXCCDF}" | sed -e "s:@@STREAMNAME@@:${STREAMNAME}:g" -e "s:@@XCCDFRESULTNAME@@:${STREAMNAME%%.xml}-xccdf-results.xml:g" -e "s:@@OVALRESULTNAME@@:${STREAMNAME%%.xml}-oval-results.xml:g" -e "s:@@STREAMID@@:${STREAMID}:g");
+          CMD=$(echo "${SCAPSCANXCCDF}" | sed -e "s:@@STREAMNAME@@:${STREAMNAME}:g" -e "s:@@XCCDFRESULTNAME@@:${STREAMRESULTID}-xccdf-results.xml:g" -e "s:@@OVALRESULTNAME@@:${STREAMRESULTID}-oval-results.xml:g" -e "s:@@STREAMID@@:${STREAMID}:g");
 	fi
 	echo "Running ${CMD}";
 	cd ${TMPDIR};
 	${CMD};
-	sendResults ${STREAMNAME%%.xml}-xccdf-results.xml;
+	sendResults ${STREAMRESULTID}-xccdf-results.xml;
 	# Hack because oscap does not allow providing filename for oval results
         OVALFILES=$(grep check-content-ref.*oval: ${STREAMNAME} | sed -e 's:.*href="\([^"]*\)".*:\1:g' | sort | uniq);
 	for OVALFILE in ${OVALFILES};
@@ -231,22 +233,22 @@ evaluateStreams() {
           sendResults ${OVALFILE}.result.xml;
 	done
 	# Now send oval results if they exist
-        if [ -f ${STREAMNAME%%.xml}-oval-results.xml ];
+        if [ -f ${STREAMRESULTID}-oval-results.xml ];
 	then
-          sendResults ${STREAMNAME%%.xml}-oval-results.xml;
+          sendResults ${STREAMRESULTID}-oval-results.xml;
 	fi
       elif [ "${STREAMTYPE}" = "oval" ];
       then
         if [ -z "${STREAMID}" ];
 	then
-          CMD=$(echo "${SCAPSCANOVAL_NOID}" | sed -e "s:@@STREAMNAME@@:${STREAMNAME}:g" -e "s:@@OVALRESULTNAME@@:${STREAMNAME%%.xml}-oval-results.xml:g");
+          CMD=$(echo "${SCAPSCANOVAL_NOID}" | sed -e "s:@@STREAMNAME@@:${STREAMNAME}:g" -e "s:@@OVALRESULTNAME@@:${STREAMRESULTID}-oval-results.xml:g");
 	else
-          CMD=$(echo "${SCAPSCANOVAL}" | sed -e "s:@@STREAMNAME@@:${STREAMNAME}:g" -e "s:@@OVALRESULTNAME@@:${STREAMNAME%%.xml}-oval-results.xml:g" -e "s:@@STREAMID@@:${STREAMID}:g");
+          CMD=$(echo "${SCAPSCANOVAL}" | sed -e "s:@@STREAMNAME@@:${STREAMNAME}:g" -e "s:@@OVALRESULTNAME@@:${STREAMRESULTID}-oval-results.xml:g" -e "s:@@STREAMID@@:${STREAMID}:g");
 	fi
 	echo "Running ${CMD}";
 	cd ${TMPDIR};
 	${CMD};
-	sendResults ${STREAMNAME%%.xml}-oval-results.xml;
+	sendResults ${STREAMRESULTID}-oval-results.xml;
       else
         echo "!! Type ${STREAMTYPE} is not known.";
       fi;
