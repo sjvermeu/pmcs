@@ -38,9 +38,98 @@ sub nice_die {
   exit($RC);
 }
 
+sub sendResults {
+  my $FILE = shift;
+  my $FILENAME = shift;
+  my $REPOTYPE;
+  my $POSTRES;
+
+  if ($RESULTREPO =~ /^([^:]*):.*/i) {
+    $REPOTYPE = $1;
+  };
+
+  if (!defined($FILENAME)) {
+    $POSTRES = "${RESULTREPO}";
+    $POSTRES =~ s/\@\@TARGETNAME\@\@/${FQDN}/g;
+    $POSTRES =~ s/\@\@FILENAME\@\@/${FILE}/g;
+    $POSTRES =~ s/\@\@DATE\@\@/${LOCALDATE}/g;
+  } else {
+    $POSTRES = "${RESULTREPO}";
+    $POSTRES =~ s/\@\@TARGETNAME\@\@/${FQDN}/g;
+    $POSTRES =~ s/\@\@FILENAME\@\@/${FILENAME}/g;
+    $POSTRES =~ s/\@\@DATE\@\@/${LOCALDATE}/g;
+  };
+
+  copyResourceToRemote("${FILE}", "${POSTRES}");
+};
+
 sub evaluateStreams {
   foreach $STREAM (local_file_cat("${TMPDIR}/list")) {
-    # TODO
+    my $STREAMTYPE;
+    my $STREAMRESULTID;
+    my $STREAMPATH;
+    my $STREAMID;
+    my $STREAMNAME;
+    my $COMMAND;
+
+    if ($STREAM =~ /^([^#]*)#([^#]*)#([^#]*)#(.*)/i) {
+      $STREAMTYPE = $1;
+      $STREAMRESULTID = $2;
+      $STREAMPATH = $3;
+      $STREAMID = $4;
+    };
+
+    print("-- Evaluating STREAM ${STREAMPATH} (type ${STREAMTYPE}, id ${STREAMID})\n");
+    print("\n");
+    $STREAMNAME = basename(${STREAMPATH});
+    if (copyResourceToLocal("${REPO}/stream/${STREAMPATH}", "${TMPDIR}/${STREAMNAME}") == 0) {
+      if ($STREAMTYPE eq "xccdf") {
+        if (!defined($STREAMID)) {
+	  $COMMAND = "${SCAPSCANXCCDF_NOPROFILE}";
+	  $COMMAND =~ s/\@\@STREAMNAME\@\@/${STREAMNAME}/g;
+	  $COMMAND =~ s/\@\@XCCDFRESULTNAME\@\@/${STREAMRESULTID}-xccdf-results.xml/g;
+	  $COMMAND =~ s/\@\@OVALRESULTNAME\@\@/${STREAMRESULTID}-oval-results.xml/g;
+	} else {
+	  $COMMAND = "${SCAPSCANXCCDF}";
+	  $COMMAND =~ s/\@\@STREAMNAME\@\@/${STREAMNAME}/g;
+	  $COMMAND =~ s/\@\@XCCDFRESULTNAME\@\@/${STREAMRESULTID}-xccdf-results.xml/g;
+	  $COMMAND =~ s/\@\@OVALRESULTNAME\@\@/${STREAMRESULTID}-oval-results.xml/g;
+	  $COMMAND =~ s/\@\@STREAMID\@\@/${STREAMID}/g;
+	};
+	print("Running ${COMMAND}\n");
+	chdir(${TMPDIR});
+	system(${COMMAND});
+	sendResults("${STREAMRESULTID}-xccdf-results.xml");
+	# Hack because oscap does not allow providing filename for oval results
+	my @OVALFILES = glob ("*.xml.result.xml");
+	foreach $OVALFILE (@OVALFILES) {
+	  if (!($OVALFILE =~ /\%/i)) {
+	    $OVALFILE = basename($OVALFILE);
+            sendResults ("${OVALFILE}", "${STREAMRESULTID}-oval-results.xml.${OVALFILE}");
+	  };
+	};
+	if ( -f "${STREAMRESULTID}-oval-results.xml" ) {
+          sendResults ("${STREAMRESULTID}-oval-results.xml");
+	};
+      } elsif ($STREAMTYPE eq "oval") {
+        if (!defined($STREAMID)) {
+	  $COMMAND = "${SCAPSCANOVAL_NOID}";
+	  $COMMAND =~ s/\@\@STREAMNAME\@\@/${STREAMNAME}/g;
+	  $COMMAND =~ s/\@\@OVALRESULTNAME\@\@/${STREAMRESULTID}-oval-results.xml/g;
+	} else {
+	  $COMMAND = "${SCAPSCANOVAL}";
+	  $COMMAND =~ s/\@\@STREAMNAME\@\@/${STREAMNAME}/g;
+	  $COMMAND =~ s/\@\@OVALRESULTNAME\@\@/${STREAMRESULTID}-oval-results.xml/g;
+	  $COMMAND =~ s/\@\@STREAMID\@\@/${STREAMID}/g;
+	};
+	print("Running ${COMMAND}\n");
+	chdir(${TMPDIR});
+	system(${COMMAND});
+	sendResults("${STREAMRESULTID}-oval-results.xml");
+      };
+    } else {
+      nice_die(1, "Could not copy ${REPO}/stream/${STREAMPATH} to ${TMPDIR}/${STREAMNAME}\n"); 
+    };
   };
 };
 
@@ -167,9 +256,9 @@ sub copyResourceToRemote {
   my $DST = shift;
   my $RC  = 0;
 
-  my $PROTO = "";
+  my $PROTO;
 
-  if ($DST =~ /^(^:]*):.*/i) { $PROTO = $1 };
+  if ($DST =~ /^([^:]*):.*/i) { $PROTO = $1 };
   if ($PROTO eq "file") {
     my $REMOTEDST;
     my $REMOTEDIR;
@@ -182,6 +271,8 @@ sub copyResourceToRemote {
     };
   } elsif (($PROTO eq "http") || ($PROTO eq "https")) {
     local_wpost($SRC, $DST); 
+  } else {
+    nice_die(2, "Protocol ${PROTO} is not supported\n"); 
   };
 
   return($RC)
@@ -317,3 +408,4 @@ if (defined($PORT)) {
   evaluateStreams();
 }
 
+chdir($CDIR);
