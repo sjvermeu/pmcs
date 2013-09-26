@@ -26,7 +26,9 @@ is needed.
 
 pmcs will use SCAP data streams by bundling the XCCDF, OVAL, CPE (and in the
 future other protocols as well) for each target based on a prepared definition,
-and offering the SCAP data stream as a single HTTP(S) resource.
+and offering the SCAP data stream as a single HTTP(S) resource. It is however no
+hard requirement that the data is in SCAP data stream format: we can easily just
+pass OVAL files and use those as long as they are "contained".
 
 Local SCAP scanners pull the SCAP data stream(s) needed for the system, based on
 a set of system parameters (hostname, domainname, platform, class and generic
