@@ -6,6 +6,7 @@ use Cwd;
 use File::Basename;
 use File::Copy;
 use File::Path;
+use File::Spec::Functions;
 use File::Temp qw/ tempfile tempdir /;
 use LWP::UserAgent;
 use Sys::Hostname;
@@ -16,6 +17,7 @@ my $FQDN;
 my $DOMAIN;
 my $CLASS;
 my $REPO;
+my $REPOTYPE;
 my $PLATFORM;
 my $KEYWORDS;
 my $RESULTREPO;
@@ -64,7 +66,7 @@ sub sendResults {
 };
 
 sub evaluateStreams {
-  foreach $STREAM (local_file_cat("${TMPDIR}/list")) {
+  foreach $STREAM (local_file_cat(catfile("${TMPDIR}", "list"))) {
     my $STREAMTYPE;
     my $STREAMRESULTID;
     my $STREAMPATH;
@@ -82,9 +84,9 @@ sub evaluateStreams {
     print("-- Evaluating STREAM ${STREAMPATH} (type ${STREAMTYPE}, id ${STREAMID})\n");
     print("\n");
     $STREAMNAME = basename(${STREAMPATH});
-    if (copyResourceToLocal("${REPO}/stream/${STREAMPATH}", "${TMPDIR}/${STREAMNAME}") == 0) {
+    if (copyResourceToLocal("${REPO}/stream/${STREAMPATH}", catfile("${TMPDIR}", "${STREAMNAME}")) == 0) {
       if ($STREAMTYPE eq "xccdf") {
-        if (!defined($STREAMID)) {
+        if ((!defined($STREAMID)) || ($STREAMID eq "")) {
 	  $COMMAND = "${SCAPSCANXCCDF_NOPROFILE}";
 	  $COMMAND =~ s/\@\@STREAMNAME\@\@/${STREAMNAME}/g;
 	  $COMMAND =~ s/\@\@XCCDFRESULTNAME\@\@/${STREAMRESULTID}-xccdf-results.xml/g;
@@ -112,7 +114,7 @@ sub evaluateStreams {
           sendResults ("${STREAMRESULTID}-oval-results.xml");
 	};
       } elsif ($STREAMTYPE eq "oval") {
-        if (!defined($STREAMID)) {
+        if ((!defined($STREAMID)) || ($STREAMID eq "")) {
 	  $COMMAND = "${SCAPSCANOVAL_NOID}";
 	  $COMMAND =~ s/\@\@STREAMNAME\@\@/${STREAMNAME}/g;
 	  $COMMAND =~ s/\@\@OVALRESULTNAME\@\@/${STREAMRESULTID}-oval-results.xml/g;
@@ -128,7 +130,7 @@ sub evaluateStreams {
 	sendResults("${STREAMRESULTID}-oval-results.xml");
       };
     } else {
-      nice_die(1, "Could not copy ${REPO}/stream/${STREAMPATH} to ${TMPDIR}/${STREAMNAME}\n"); 
+      nice_die(1, "Could not copy ${REPO}/stream/${STREAMPATH} to " . catfile("${TMPDIR}", "${STREAMNAME}") . "\n"); 
     };
   };
 };
@@ -207,10 +209,16 @@ sub copyResourceToLocal {
 
   my $PROTO = "";
 
+
   if ($SRC =~ /^([^:]*):.*/i) { $PROTO = $1 };
   if ($PROTO eq "file") {
     my $LOCALSRC;
-    if ($SRC =~ /^[^:]*:\/\/(.*)/i) { $LOCALSRC = $1 };
+    if ($SRC =~ /^[^:]*:\/\/(.*)/i) { 
+    	$LOCALSRC = $1;
+    	if ($CLASS eq "windows") {
+    		$LOCALSRC =~ s/\//\\/g;
+    	};
+    };
     if (-e $LOCALSRC) {
       copy($LOCALSRC, $DST);
       if (! -e $DST) {
@@ -289,32 +297,32 @@ sub setConfigurationVariables {
   );
 
   foreach $REPO_URL (@REPO_URLS) {
-    if (copyResourceToLocal($REPO_URL, "${TMPDIR}/config") == 0) {
-      if (file_contains("^platform=", "${TMPDIR}/config") > 0) {
-        my $result=file_show_value_cleaned("platform", "${TMPDIR}/config");
-	$PLATFORM=$result;
+    if (copyResourceToLocal($REPO_URL, catfile("${TMPDIR}", "config")) == 0) {
+      if (file_contains("^platform=", catfile("${TMPDIR}", "config")) > 0) {
+        my $result=file_show_value_cleaned("platform", catfile("${TMPDIR}", "config"));
+        $PLATFORM=$result;
       };
-      if (file_contains("^resultrepo=", "${TMPDIR}/config") > 0) {
-        $RESULTREPO=file_show_value("resultrepo", "${TMPDIR}/config");
+      if (file_contains("^resultrepo=", catfile("${TMPDIR}", "config")) > 0) {
+        $RESULTREPO=file_show_value("resultrepo", catfile("${TMPDIR}", "config"));
       };
-      if (file_contains("^scapscanneroval=", "${TMPDIR}/config") > 0) {
-        $SCAPSCANOVAL=file_show_value("scapscanneroval", "${TMPDIR}/config");
+      if (file_contains("^scapscanneroval=", catfile("${TMPDIR}", "config")) > 0) {
+        $SCAPSCANOVAL=file_show_value("scapscanneroval", catfile("${TMPDIR}", "config"));
       };
-      if (file_contains("^scapscanneroval_noid=", "${TMPDIR}/config") > 0) {
-        $SCAPSCANOVAL_NOID=file_show_value("scapscanneroval_noid", "${TMPDIR}/config");
+      if (file_contains("^scapscanneroval_noid=", catfile("${TMPDIR}", "config")) > 0) {
+        $SCAPSCANOVAL_NOID=file_show_value("scapscanneroval_noid", catfile("${TMPDIR}","config"));
       };
-      if (file_contains("^scapscannerxccdf=", "${TMPDIR}/config") > 0) {
-        $SCAPSCANXCCDF=file_show_value("scapscannerxccdf", "${TMPDIR}/config");
+      if (file_contains("^scapscannerxccdf=", catfile("${TMPDIR}", "config")) > 0) {
+        $SCAPSCANXCCDF=file_show_value("scapscannerxccdf", catfile("${TMPDIR}", "config"));
       };
-      if (file_contains("^scapscannerxccdf_noprofile=", "${TMPDIR}/config") > 0) {
-        $SCAPSCANXCCDF_NOPROFILE=file_show_value("scapscannerxccdf_noprofile", "${TMPDIR}/config");
+      if (file_contains("^scapscannerxccdf_noprofile=", catfile("${TMPDIR}", "config")) > 0) {
+        $SCAPSCANXCCDF_NOPROFILE=file_show_value("scapscannerxccdf_noprofile", catfile("${TMPDIR}", "config"));
       };
-      if (file_contains("^keywords=", "${TMPDIR}/config") > 0) {
-        my $value = file_show_value("keywords", "${TMPDIR}/config");
+      if (file_contains("^keywords=", catfile("${TMPDIR}", "config")) > 0) {
+        my $value = file_show_value("keywords", catfile("${TMPDIR}", "config"));
         $KEYWORDS="${KEYWORDS},${value}"
       };
     };
-    unlink("${TMPDIR}/config");
+    unlink(catfile("${TMPDIR}", "config"));
   };
 
   print("PLATFORM                = ${PLATFORM}\n");
@@ -340,24 +348,24 @@ sub getStreamList {
   );
 
   foreach $REPO_URL (@REPO_URLS) {
-    if (copyResourceToLocal($REPO_URL, "${TMPDIR}/sublist") == 0) {
-      local_file_append("${TMPDIR}/sublist", "${TMPDIR}/list");
+    if (copyResourceToLocal($REPO_URL, catfile("${TMPDIR}", "sublist")) == 0) {
+      local_file_append(catfile("${TMPDIR}", "sublist"), catfile("${TMPDIR}", "list"));
     };
   };
 
   foreach $KEYWORD (split(',', $KEYWORDS)) {
-    if (copyResourceToLocal("${REPO}/stream/keywords/${KEYWORD}/list.conf", "${TMPDIR}/sublist") == 0) {
-      local_file_append("${TMPDIR}/sublist", "${TMPDIR}/list");
+    if (copyResourceToLocal("${REPO}/stream/keywords/${KEYWORD}/list.conf", catfile("${TMPDIR}", "sublist")) == 0) {
+      local_file_append(catfile("${TMPDIR}", "sublist"), catfile("${TMPDIR}", "list"));
     };
   };
 
-  if (! -e "${TMPDIR}/list") { open FILEHANDLE, ">${TMPDIR}/list"; close FILEHANDLE; };
-  open(FILEHANDLE, "<${TMPDIR}/list");
+  if (! -e catfile("${TMPDIR}", "list")) { open FILEHANDLE, ">" . catfile("${TMPDIR}", "list"); close FILEHANDLE; };
+  open(FILEHANDLE, "<" . catfile("${TMPDIR}", "list"));
   my(@lines) = <FILEHANDLE>;
   @lines = sort(@lines);
   close(FILEHANDLE);
 
-  open(FILEHANDLE, ">${TMPDIR}/list");
+  open(FILEHANDLE, ">" . catfile("${TMPDIR}", "list"));
   foreach $line (@lines) {
     print FILEHANDLE $line;
   };
@@ -373,18 +381,22 @@ if ( "$ARGV[0]" eq "-d" ) {
   $REPO=$ARGV[0];
 };
 
-if (-z $REPO) {
+if (!defined($REPO)) {
   print("Usage: pmcsa.pl [ -d <port> ] <repository>\n");
   exit(1);
 };
 
-$CLASS="unix"; # For now
+$CLASS="unix"; # For starters
+if (File::Spec->devnull() eq "nul") {
+	$CLASS="windows";
+};
 $DOMAIN;
 if (!defined($DOMAIN)) {
   $DOMAIN="localdomain";
 }
 $FQDN=hostname();
 $FQDN.=".${DOMAIN}";
+if ($REPO =~ /^([^:]*):\/\/.*/i) { $REPOTYPE = $1; };
 
 print("Poor Man Central SCAP Agent v0.1\n");
 print("\n");
