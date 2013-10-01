@@ -48,7 +48,7 @@ if( (form['target'].value != os.environ['REMOTE_HOST']) &
   exit(0)
 
 try:
-  os.mkdir(BASEDIR + os.path.dirname(form['filename'].value))
+  os.makedirs(BASEDIR + os.path.dirname(form['filename'].value))
 except OSError:
   pass
 
