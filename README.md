@@ -113,6 +113,18 @@ systems without having to wait for a particular scheduled run. We need to
 support this, which means that the pmcsa (pmsc agent) will also support a
 daemonized setup to which administrators can push evaluation requests.
 
+### How to scan remote systems ###
+
+Later editions of pmcsa will support remote scanning as well. In these setups,
+the pmcsa agent pulls in the remote list. This list contains the evaluations
+(xccdf or oval) that need to be done, but also an additional parameter called
+the _target list_.
+
+This target list contains the ID of the target, the encryption type of the
+remainder of the data, and then a list of key/value pairs which will be used
+as environment variables. That means that the scans that will be executed
+(one for each ID) will be done with the given environment variables loaded.
+
 What pmcs does not provide
 --------------------------
 

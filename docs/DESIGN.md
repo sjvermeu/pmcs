@@ -102,6 +102,7 @@ Next, the pmcs agent will get an overview of SCAP data streams that it needs to
 evaluate. The lists are obtained through the following URIs (all hits are
 evaluated).
 
+* stream/hosts/${FQDN}/remotes.conf
 * stream/hosts/${FQDN}/list.conf
 * stream/domains/${DOMAIN}/classes/${CLASS}/platforms/${PLATFORM}/list.conf
 * stream/domains/${DOMAIN}/classes/${CLASS}/list.conf
@@ -115,6 +116,9 @@ mentioned earlier) but where special characters (such as spaces) are changed
 with underscores.
 
 The URI with `${KEYWORD}` is evaluated for each keyword assigned to the system.
+
+The `remotes.conf` file is used to identify remote targets to scan, whereas
+`list.conf` contains the local scanning.
 
 ### list.conf syntax ###
 
@@ -141,6 +145,37 @@ oval#vuln#classes/unix/vulnerabilities.xml#
 xccdf#pgsql-scb#domains/localdomain/benchmarks/postgresql-benchmark.xml#xccdf_org.gentoo.dev.swift_profile_default
 oval#inventory#domains/localdomain/classes/unix/inv.xml#oval:org.gentoo.dev.swift:def:4432
 ```
+
+### remotes.conf syntax ###
+
+The `remotes.conf` file obtained from the repository uses the following syntax:
+
+```
+<type>#<resultid>#<streamfile>#[<id>]#<targetlist>
+```
+
+The added `<targetlist>` is a relative URL within the configuration repository
+pointing to the list of targets.
+
+### target list syntax ###
+
+The target list uses the following syntax:
+
+```
+<targetid>#<encryptiontype>#<environmentlist>
+```
+
+* The `<targetid>` is a unique identifier for the target. For instance, if remote
+  scanning is used for LDAP servers, this could be `ldap/serv1` , `ldap/serv2`, etc.
+* The `<encryptiontype>` is the type of encryption used in the `<environmentlist>`.
+  It could be just `clear` if there is no encryption, or `openssl-aes=<id>` if it
+  uses an openssl-encrypted string.
+* The `<environmentlist>` is, if decrypted, in a key-value set, comma separated with
+  (mandatory) quotes, like so: `ENV1="value1",ENV2="value2",...`.
+
+The encryption is handled by openssl if `openssl-aes=<id>` is given. The `<id>` value
+is a simple string used to find the proper key. The location of the keys is given
+through the PMCS_AESKEY_<id> environment variable.
 
 pmcs agent
 ----------

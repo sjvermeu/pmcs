@@ -56,6 +56,7 @@ Fetch configuration from POSSIBLE_TARGETS (overriding values):
 
 
 STREAM_LISTS = 
+  <repo-urn>/stream/hosts/FQDN/remotes.conf
   <repo-urn>/stream/hosts/FQDN/list.conf
   <repo-urn>/stream/domains/DOMAIN/classes/CLASS/platforms/PLATFORM/list.conf
   <repo-urn>/stream/domains/DOMAIN/classes/CLASS/list.conf
@@ -65,6 +66,7 @@ STREAM_LISTS =
   [ for each KEYWORD in KEYWORDS: <repo-urn>/stream/keywords/KEYWORD/list.conf ]
 
 STREAMS = Concatenate stream identifiers from all list.conf files
+REMOTESTREAMS = remotes.conf content
 
 for each STREAM in STREAMS
   STREAMTYPE     = STREAM[1] # separated
@@ -90,6 +92,25 @@ for each STREAM in STREAMS
     Substitute @@TARGETNAME@@ with FQDN
     Substitute @@FILENAME@@ with OVALRESULT file name
     Substitute @@DATE@@ with LOCALDATE value
+
+for each REMOTESTREAM in REMOTESTREAMS
+  STREAMTYPE     = REMOTESTREAM[1]
+  STREAMRESULTID = REMOTESTREAM[2]
+  STREAMPATH     = REMOTESTREAM[3]
+  STREAMID       = REMOTESTREAM[4]
+  STREAMLIST     = REMOTESTREAM[5]
+
+  ## SCANSCAN{STREAMTYPE} -> depends on type!
+  ## (_NO*)? if no id or profile given
+  FULLSTREAMLIST = <repo-urn>/stream/targets/STREAMLIST
+  for each STREAM in FULLSTREAMLIST
+    TARGETID      = STREAM[1]
+    TARGETENCRYPT = STREAM[2]
+    TARGETENVENC  = STREAM[3]
+    TARGETENV     = decrypt(TARGETENVENC)
+    for each ENV in TARGETENV
+      set ENV
+    call XCCDF/OVAL code (TARGETNAME is now TARGETID)
 ```
 
 As the evaluation of a data stream could lead to multiple result files (one
