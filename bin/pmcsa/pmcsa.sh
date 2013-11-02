@@ -188,8 +188,8 @@ daemonize() {
   do
     OUT=$(echo "Om mnom mnom... " | nc -l -v -p ${PORT} 2>&1);
     RC=$?;
-    URL=$(echo "${OUT}" | grep -E '^(HEAD|GET) ' | sed -e 's:^[^	 ]*[ 	]\([^ 	]*\).*:\1:g');
-    REMHOST=$(echo "${OUT}" | grep '^connect to' | sed -e 's:.* from \(.*\)[ 	][0-9]*:\1:g');
+    URL=$(echo "${OUT}" | grep -E '^(HEAD|GET) ' | sed -e 's|^[^	 ]*[ 	]\([^ 	]*\).*|\1|g');
+    REMHOST=$(echo "${OUT}" | grep '^connect to' | sed -e 's|.* from \(.*\)[ 	][0-9]*|\1|g');
 
     echo "Request from '${REMHOST}': ${URL}";
     echo "${URL}" | grep -qE "/Evaluate\?${URLSTRING}=${USERSTRING}\&${URLSTRING}=${USERSTRING}\&${URLSTRING}=${USERSTRING}\&${URLSTRING}=${USERSTRING}";
@@ -199,10 +199,10 @@ daemonize() {
       continue;
     fi
 
-    STREAMTYPE=$(echo ${URL} | grep 'type=' | sed -e "s:.*type=\(${USERSTRING}\).*:\1:g");
-    STREAMPATH=$(echo ${URL} | grep 'path=' | sed -e "s:.*path=\(${USERSTRING}\).*:\1:g");
-    STREAMRESULTID=$(echo ${URL} | grep 'result=' | sed -e "s:.*result=\(${USERSTRING}\).*:\1:g");
-    STREAMID=$(echo ${URL} | grep 'id=' | sed -e "s:.*id=\(${USERSTRING}\).*:\1:g");
+    STREAMTYPE=$(echo ${URL} | grep 'type=' | sed -e "s|.*type=\(${USERSTRING}\).*|\1|g");
+    STREAMPATH=$(echo ${URL} | grep 'path=' | sed -e "s|.*path=\(${USERSTRING}\).*|\1|g");
+    STREAMRESULTID=$(echo ${URL} | grep 'result=' | sed -e "s|.*result=\(${USERSTRING}\).*|\1|g");
+    STREAMID=$(echo ${URL} | grep 'id=' | sed -e "s|.*id=\(${USERSTRING}\).*|\1|g");
 
     if [ -z "${STREAMTYPE}" ] || [ -z "${STREAMPATH}" ] || [ -z "${STREAMID}" ] || [ -z "${STREAMRESULTID}" ];
     then
