@@ -1,6 +1,8 @@
 Poor Man Central SCAP
 =====================
 
+> PMCS is no longer actively maintained.
+
 Introduction
 ------------
 
